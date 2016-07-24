@@ -1,0 +1,92 @@
+---
+title: "Repr_Research"
+author: "JAGUNS"
+date: "21 juli 2016"
+output: html_document
+---
+# Reproducible Research: Peer Assessment 1
+
+## Load the Data.
+```{r echo=TRUE} 
+fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+temp <- tempfile()
+download.file(fileurl, temp)
+unzip(temp)
+unlink(temp)
+activity <- read.csv("activity.csv", header=TRUE)
+dim(activity)
+```
+### Loading an Processing the Data
+```{r echo=TRUE}
+ACT <- read.csv("activity.csv", header=TRUE)
+```
+### What is mean total number of steps taken per day?
+### Plot Total Steps per Day
+
+```{r echo=TRUE}
+tbl <- with(ACT,tapply(steps,date,sum))
+barplot(tbl)
+title(ylab="Number of Steps",xlab="Date",main="Steps per Day")
+```
+
+### Mean and Median steps per day
+```{r echo=TRUE}
+totalStepsDay <- aggregate(steps ~ date,ACT,sum)
+summary(totalStepsDay)
+```
+
+The average steps per day is `r summary(totalStepsDay)[11]`
+The median steps per day is `r summary(totalStepsDay)[10]`
+
+### What is the average daily activity pattern?
+```{r echo=TRUE}
+stepsInterval <- aggregate(steps ~ interval,ACT,mean)
+m <- min(stepsInterval$steps[stepsInterval$steps != 0])
+plot(stepsInterval$interval, log10(stepsInterval$steps + m),type="l",xlab="Intervals",ylab="Log10 of Steps")
+title(main="Time Series Graph (Mean Steps per Interval)")
+mxx <- which.max(stepsInterval[,2])
+```
+
+The Interval with the maximum steps is interval:`r mxx`
+
+### Imputing missing values
+```{r echo=TRUE}
+nas <- sum(is.na(ACT$steps))
+```
+Number of NA's is: `r nas`
+
+There are a number of packages that deal with imputing.
+I have choosen the Hmisc package used in an earlier course.
+```{r echo=TRUE}
+library(Hmisc)
+ACT1 <- ACT
+ACT1$steps <- impute(ACT1$steps, mean)
+agg1 <- aggregate(steps ~ date,ACT1,sum)
+summary(agg1)
+hist(agg1$steps,xlab="Total Steps per Day",ylab="Number of Days",main="Sum of Steps per Day")
+```
+
+The new average is: `r summary(agg1)[11]`
+The new median is: `r summary(agg1)[10]`
+Conclusion: The  mean and median are not changed,
+because the NA's are imputed with the mean over all days.
+
+### Are there differences in activity patterns between weekdays and weekends?
+```{r echo=TRUE}
+ACT1$date<- as.character(ACT1$date)
+wday <- c("maandag","dinsdag","woensdag","donderdag","vrijdag")
+
+for ( i in 1: dim(ACT1)[1]) {
+  if (weekdays(as.Date(ACT1$date[i]))%in% wday){ ACT1$days[i]<-"weekdays"}
+    else { ACT1$days[i]<-"weekend"}
+}
+
+ACT1 <- transform(ACT1, days=factor(days))
+ACT1 <- transform(ACT1, date=factor(date))
+str(ACT1)
+aggr2 <- aggregate(steps ~ interval + days,ACT1,mean)
+xyplot(steps ~ interval | days, data=aggr2,layout=c(1,2),type="l")
+```
+
+
+
