@@ -56,9 +56,12 @@ nas <- sum(is.na(ACT$steps))
 Number of NA's is: `r nas`
 
 There are a number of packages that deal with imputing.
-I have choosen the Hmisc package used in an earlier course.
-```{r echo=TRUE}
+I have choosen the Hmisc package, used in an earlier course.
+```{r echo=FALSE, results="hide"}
 library(Hmisc)
+```
+
+```{r echo=TRUE}
 ACT1 <- ACT
 ACT1$steps <- impute(ACT1$steps, mean)
 agg1 <- aggregate(steps ~ date,ACT1,sum)
